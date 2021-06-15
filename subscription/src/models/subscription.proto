@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package subscription;
+
+service Subscription {
+  rpc create (Subscription) returns (Subscription) {}
+  rpc getOne (SubscriptionId) returns (Subscription) {}
+  rpc getAll (Empty) returns (SubscriptionList) {}
+  rpc update (Subscription) returns (Subscription) {}
+  rpc delete (SubscriptionId) returns (SubscriptionCount) {}
+}
+
+message SubscriptionId {
+    int64 id = 1;
+}
+
+message Subscription {
+  int64  id = 1;
+  string email = 2;
+  string firstname = 3;
+  string gender = 4;
+  string dateOfBirth = 5;
+  bool   consent = 6;
+  int64  newsletterId = 7;
+}
+
+message SubscriptionList {
+  repeated Subscription item = 1;
+}
+
+message SubscriptionCount {
+  int64 count = 1;
+}
