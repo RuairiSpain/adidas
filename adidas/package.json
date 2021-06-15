@@ -21,6 +21,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@grpc/proto-loader": "^0.6.2",
     "@metinseylan/nestjs-opentelemetry": "^1.0.1",
     "@nestjs/common": "^7.6.15",
     "@nestjs/config": "^0.6.3",
@@ -35,9 +36,12 @@
     "@opentelemetry/instrumentation-express": "^0.20.0",
     "@opentelemetry/instrumentation-http": "^0.20.0",
     "@opentelemetry/instrumentation-pg": "^0.20.0",
+    "cache-manager": "^3.4.4",
+    "cache-manager-redis-store": "^2.0.0",
     "class-transformer": "^0.4.0",
     "class-validator": "^0.13.1",
     "compression": "^1.7.4",
+    "grpc": "^1.24.10",
     "helmet": "^4.6.0",
     "morgan": "^1.10.0",
     "nestjs-log4js": "^0.1.1",

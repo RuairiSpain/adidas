@@ -10,8 +10,16 @@ async function bootstrap() {
     {
       transport: Transport.GRPC,
       options: {
-        package: process.env.SUBSCRIPTION_PACKAGE,
+        url: 'localhost:50055',
+        package: 'subscription',
         protoPath: join(__dirname, 'models/subscription.proto'),
+        loader: {
+          keepCase: true,
+          arrays: true,
+          longs: String,
+          enums: String,
+          defaults: true,
+        },
       },
     },
   );

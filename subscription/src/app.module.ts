@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { SequelizeModule } from '@nestjs/sequelize';
 
-import { AppController } from './app.controller';
+import { SubscriptionGrpcService } from './app.controller';
 import { SubscriptionService } from './services/subscription.service';
 
 const envFilePath =
@@ -23,7 +23,7 @@ const envFilePath =
       }),
     }),
   ],
-  controllers: [AppController],
+  controllers: [SubscriptionGrpcService],
   providers: [SubscriptionService],
 })
 export class AppModule {}

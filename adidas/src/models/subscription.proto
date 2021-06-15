@@ -4,24 +4,24 @@ package subscription;
 
 service SubscriptionService {
   rpc create (Subscription) returns (Subscription) {}
-  rpc getOne (SubscriptionId) returns (Subscription) {}
+  rpc getOne (ById) returns (Subscription) {}
   rpc getAll (Empty) returns (SubscriptionList) {}
   rpc update (Subscription) returns (Subscription) {}
-  rpc delete (SubscriptionId) returns (SubscriptionCount) {}
-}
-
-message SubscriptionId {
-    int64 id = 1;
+  rpc delete (ById) returns (SubscriptionCount) {}
 }
 
 message Subscription {
-  int64  id = 1;
+  int32 id = 1;
   string email = 2;
   string firstname = 3;
   string gender = 4;
   string dateOfBirth = 5;
-  bool   consent = 6;
-  int64  newsletterId = 7;
+  bool consent = 6;
+  int32 newsletterId = 7;
+}
+
+message ById {
+  int32 id = 1;
 }
 
 message SubscriptionList {
@@ -29,5 +29,9 @@ message SubscriptionList {
 }
 
 message SubscriptionCount {
-  int64 count = 1;
+  int32 count = 1;
+}
+
+message Empty {
+
 }
