@@ -1,4 +1,8 @@
-import { LoggerService, OpenTelemetryModule, TraceService } from '@metinseylan/nestjs-opentelemetry';
+import {
+  LoggerService,
+  OpenTelemetryModule,
+  TraceService,
+} from '@metinseylan/nestjs-opentelemetry';
 import { CacheInterceptor, CacheModule, Module } from '@nestjs/common';
 import { Logger } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';

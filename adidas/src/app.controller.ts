@@ -1,4 +1,8 @@
-import { LoggerService, Span, TraceService } from '@metinseylan/nestjs-opentelemetry';
+import {
+  LoggerService,
+  Span,
+  TraceService,
+} from '@metinseylan/nestjs-opentelemetry';
 import {
   Body,
   Controller,
