@@ -4,6 +4,7 @@ import {
   BelongsTo,
   Column,
   CreatedAt,
+  DataType,
   Default,
   DeletedAt,
   ForeignKey,
@@ -16,7 +17,7 @@ import {
   UpdatedAt,
 } from 'sequelize-typescript';
 
-import { NewsletterDao } from './NewsletterDao';
+import { NewsletterDao } from './newsletterDao';
 
 @Table({
   tableName: 'Subscription',
@@ -32,29 +33,29 @@ export class SubscriptionDao extends Model<SubscriptionDao> {
   @Column
   id: number;
 
-  @Column
   @IsEmail
+  @Column
   email!: string;
 
-  @Column
   @AllowNull
+  @Column
   firstname: string;
 
-  @Column
   @AllowNull
+  @Column
   gender: string;
 
-  @Column
   @Default(true)
+  @Column
   consent!: boolean;
 
-  @Column
   @IsDate
   @IsBefore('2021-12-30')
+  @Column
   dateOfBirth!: Date;
 
-  @Column
   @ForeignKey(() => NewsletterDao)
+  @Column(DataType.NUMBER)
   public newsletterId!: number;
 
   @BelongsTo(() => NewsletterDao)

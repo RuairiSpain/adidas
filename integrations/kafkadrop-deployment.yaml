@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: Kompose convert
+    kompose.version: 1.21.0 (992df58d8)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: kafkadrop
+  name: kafkadrop
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: kafkadrop
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: Kompose convert
+        kompose.version: 1.21.0 (992df58d8)
+      creationTimestamp: null
+      labels:
+        io.kompose.network/back: "true"
+        io.kompose.network/front: "true"
+        io.kompose.service: kafkadrop
+    spec:
+      containers:
+      - env:
+        - name: KAFKA_BROKERCONNECT
+          value: kafka:19092
+        image: obsidiandynamics/kafdrop:latest
+        imagePullPolicy: ""
+        name: kafkadrop
+        ports:
+        - containerPort: 9000
+        resources: {}
+      hostname: kafkadrop
+      restartPolicy: Always
+      serviceAccountName: ""
+      volumes: null
+status: {}

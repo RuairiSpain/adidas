@@ -1,40 +1,86 @@
-version: "3.8"
-
-networks:
-    front:
-        driver: bridge
-    back:
-        driver: custom-driver-1
-    monitoring:
-        driver: custom-driver-1
+version: "3"
 
 services:
 
-  myapp:
-    image: 'YOUR_APPLICATION_IMAGE'
+  adidas:
+    build:
+      context: ./adidas
+    ports:
+      - 3000:3000
+    environment:
+      - SERVER_PORT=8000
+      - CONNECTIONSTRING=mongodb://mongo:27017/notes
+      - JAEGER_ENDPOINT=jaeger-collector.jaeger-infra.svc
+      - SUBSCRIPTION_SERVICE=subscription-service
+      - API_PORT=3000
+      - API_KEY=1ab2c3d4e5f61ab2c3d4e5f6
+    depends_on:
+      - subscription-service
+    volumes:
+      - ./:/app
     networks:
       - front
       - back
 
+  subscription-service:
+    build:
+      context: ./subscription
+    ports:
+      - 19092:19092
+    environment:
+      - LOG_FILE_NAME=adidas.log
+      - OTEL_SERVICE_NAME=nodejs-opentelemetry-tempo
+      - OTEL_EXPORTER_JAEGER_ENDPOINT=http://localhost:14268/api/traces
+      - DB_USER=sa
+      - DB_PASS=P@ssw0rd
+      - DB_SERVER=otmssql
+      - DB_NAME=OtelTempo
+    depends_on:
+      - postgres
+      - kafka
+    networks:
+      - back
+
+  email-service:
+    build:
+      context: ./email
+    ports:
+      - 19092:19092
+    environment:
+      - MAIL_HOST=smtp.example.com
+      - MAIL_USER=user@example.com
+      - MAIL_PASSWORD=topsecret
+      - MAIL_FROM=noreply@example.com
+    depends_on:
+      - kafka
+    networks:
+      - back
+
   postgres:
-        image: postgres:10.5
-        restart: unless-stopped
-        env_file:
-          - .env.development.local
-        logging:
-          options:
-            max-size: 10m
-            max-file: "3"
-        ports:
-          - '5438:5432'
-        volumes:
-          - ./postgres-data:/var/lib/postgresql/data
-          # copy the sql script to create tables
-          - ./sql/create_tables.sql:/docker-entrypoint-initdb.d/create_tables.sql
-          # copy the sql script to fill tables
-          - ./sql/fill_tables.sql:/docker-entrypoint-initdb.d/fill_tables.sql
-        networks:
-          - back
+    image: postgres:10.5
+    restart: always
+    env_file:
+      - .env.development.local
+    logging:
+      options:
+        max-size: 10m
+        max-file: "3"
+    ports:
+      - '5438:5432'
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+      # copy the sql script to create tables
+      - ./sql/create_tables.sql:/docker-entrypoint-initdb.d/create_tables.sql
+      # copy the sql script to fill tables
+      - ./sql/fill_tables.sql:/docker-entrypoint-initdb.d/fill_tables.sql
+    networks:
+      - back
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
 
   redis:
     image: 'bitnami/redis:latest'
@@ -44,225 +90,77 @@ services:
       - back
 
   zookeeper:
-    image: wurstmeister/zookeeper
+    image: wurstmeister/zookeeper:latest
     ports:
-      - "2181"
-    hostname: zookeeper
-  networks:
+      - 2181:2181
+    volumes:
+      - ./_data/zookeeper/data:/data
+    networks:
       - back
 
   kafka:
-    image: wurstmeister/kafka:latest
+    image: wurstmeister/kafka:2.12-2.5.0
+    hostname: kafka
     ports:
-      - target: 9094
-        published: 9094
-        protocol: tcp
-        mode: host
+      - 9092:9092
     environment:
-      HOSTNAME_COMMAND: "docker info | grep ^Name: | cut -d' ' -f 2"
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: INSIDE://:9092,OUTSIDE://_{HOSTNAME_COMMAND}:9094
-      KAFKA_LISTENERS: INSIDE://:9092,OUTSIDE://:9094
-      KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
-      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
-      KAFKA_ADVERTISED_HOST_NAME: kafka # docker-machine ip
-      KAFKA_ADVERTISED_PORT: 9092
+      KAFKA_LISTENERS: LISTENER_DOCKER_INTERNAL://:19092,LISTENER_DOCKER_EXTERNAL://:9092
+      KAFKA_ADVERTISED_LISTENERS: LISTENER_DOCKER_INTERNAL://kafka:19092,LISTENER_DOCKER_EXTERNAL://127.0.0.1:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: LISTENER_DOCKER_INTERNAL:PLAINTEXT,LISTENER_DOCKER_EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: LISTENER_DOCKER_INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_BROKER_ID: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'false'
+      KAFKA_CREATE_TOPICS: __consumer_offsets:50:1,send.email:1:1
+
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
+      - ./_data/kafka/data:/var/lib/kafka/data
     depends_on:
-      - "zookeeper"
+      - zookeeper
     networks:
       - back
 
-  tempo:
-    image: grafana/tempo:0.7.0
-    command: ["-config.file=/etc/tempo.yaml"]
-    volumes:
-      - ./etc/tempo-local.yaml:/etc/tempo.yaml
-      - ./data/tempo-data:/tmp/tempo
-    ports:
-      - "14268"      # jaeger ingest, Jaeger - Thrift HTTP
-      - "14250"      # Jaeger - GRPC
-      - "55680"      # OpenTelemetry
-      - "3100"       # tempo
-      - "6831/udp"   # Jaeger - Thrift Compact
-      - "6832/udp"   # Jaeger - Thrift Binary
-
-  tempo-query:
-    image: grafana/tempo-query:0.7.0
-    command: ["--grpc-storage-plugin.configuration-file=/etc/tempo-query.yaml"]
-    volumes:
-      - ./etc/tempo-query.yaml:/etc/tempo-query.yaml
-    ports:
-      - "16686:16686"  # jaeger-ui
-    depends_on:
-      - tempo
-
-  loki:
-    image: grafana/loki:2.2.0
-    command: -config.file=/etc/loki/loki-local.yaml
-    ports:
-      - "3101:3100"                                   # loki needs to be exposed so it receives logs
+  kafkadrop:
+    hostname: kafkadrop
+    image: obsidiandynamics/kafdrop:latest
     environment:
-      - JAEGER_AGENT_HOST=tempo
-      - JAEGER_ENDPOINT=http://tempo:14268/api/traces # send traces to Tempo
-      - JAEGER_SAMPLER_TYPE=const
-      - JAEGER_SAMPLER_PARAM=1
-    volumes:
-      - ./etc/loki-local.yaml:/etc/loki/loki-local.yaml
-      - ./data/loki-data:/tmp/loki
-
-  nodejs-otel-tempo-api:
-    build: .
-    command: 'node ./dist/server.js'
+      - KAFKA_BROKERCONNECT=kafka:19092
     ports:
-      - "5555:5555"
-    environment:
-      - OTEL_EXPORTER_JAEGER_ENDPOINT=http://tempo:14268/api/traces
-      - OTEL_SERVICE_NAME=nodejs-opentelemetry-tempo
-      - LOG_FILE_NAME=/app/logs/nodejs-opentelemetry-tempo.log
-      - DB_USER=sa
-      - DB_PASS=P@ssw0rd
-      - DB_SERVER=ms-db-server
-      - DB_NAME=OtelTempo
-    volumes:
-      - ./data/logs:/app/logs
-      - ./etc/wait-for.sh:/app/bin/wait-for.sh   #https://github.com/eficode/wait-for
-    depends_on:
-      - ms-db-server
-      - tempo-query
+      - 9000:9000
     networks:
-      - front
-
-  promtail:
-    image: grafana/promtail:2.2.0
-    command: -config.file=/etc/promtail/promtail-local.yaml
-    volumes:
-      - ./etc/promtail-local.yaml:/etc/promtail/promtail-local.yaml
-      - ./data/logs:/app/logs
-    depends_on:
-      - nodejs-otel-tempo-api
-      - loki
-    networks:
-      - back
-
-  volume_exporter:
-    image: mnadeem/volume_exporter
-    command: ["--volume-dir=tempo:/tmp/tempo", "--volume-dir=logs:/app/logs", "--volume-dir=loki:/tmp/loki"]
-    volumes:
-      - ./data/logs:/app/logs
-      - ./data/tempo-data:/tmp/tempo
-      - ./data/loki-data:/tmp/loki
-    ports:
-      - 9889:9888
-    networks:
-      - back
-
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: prometheus
-    restart: always
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - /etc/timezone:/etc/timezone:ro
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-      - prometheus:/prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-    depends_on:
-      - node-exporter
-      - cadvisor
-      - loki
-      - promtail
-    networks:
-      - monitoring
-      - back
-
-  node-exporter:
-    image: prom/node-exporter:latest
-    container_name: node-exporter
-    restart: always
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - /etc/timezone:/etc/timezone:ro
-      - /proc:/host/proc:ro
-      - /sys:/host/sys:ro
-      - /:/rootfs:ro
-    command:
-      - '--path.procfs=/host/proc'
-      - '--path.sysfs=/host/sys'
-      - '--path.rootfs=/rootfs'
-      - '--collector.filesystem.ignored-mount-points="^(/rootfs|/host|)/(sys|proc|dev|host|etc)($$|/)"'
-      - '--collector.filesystem.ignored-fs-types="^(sys|proc|auto|cgroup|devpts|ns|au|fuse\.lxc|mqueue)(fs|)$$"'
-    networks:
-      - monitoring
-      - back
-
-  cadvisor:
-    image: google/cadvisor:latest
-    container_name: cadvisor
-    restart: always
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - /etc/timezone:/etc/timezone:ro
-      - /:/rootfs:ro
-      - /var/run:/var/run:rw
-      - /sys:/sys:ro
-      - /var/lib/docker/:/var/lib/docker:ro
-    networks:
-      - monitoring
-      - back
-
-  grafana:
-    image: grafana/grafana:latest
-    container_name: grafana
-    restart: unless-stopped
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - /etc/timezone:/etc/timezone:ro
-      - ./grafana/grafana.ini:/etc/grafana/grafana.ini
-      - grafana:/var/lib/grafana
-    ports:
-      - 127.0.0.1:3000:3000
-    environment:
-      GF_SERVER_DOMAIN: "{{ gf_server_domain }}"
-      GF_SERVER_ROOT_URL: "{{ gf_server_root_url }}"
-    user: "1000"
-    depends_on:
-      - prometheus
-    networks:
-      - monitoring
       - back
       - front
 
-  loki:
-    image: grafana/loki:latest
-    container_name: loki
+  splunk-otel-collector:
+    image: quay.io/signalfx/splunk-otel-collector:latest
+    environment:
+      - SPLUNK_ACCESS_TOKEN=${SPLUNK_ACCESS_TOKEN}
+      - SPLUNK_REALM=${SPLUNK_REALM}
     ports:
-      - 127.0.0.1:3100:3100
-    command: -config.file=/etc/loki/local-config.yaml
-    volumes:
-      - ./loki/config.yaml:/etc/loki/config.yaml
-      - loki:/data/loki
+      - "13133:13133"
+      - "14250:14250"
+      - "14268:14268"
+      - "4317:4317"
+      - "6060:6060"
+      - "7276:7276"
+      - "8888:8888"
+      - "9080:9080"
+      - "9411:9411"
+      - "9943:9943"
     networks:
-      - monitoring
       - back
       - front
-
-  promtail:
-    image: grafana/promtail:latest
-    container_name: promtail
-    volumes:
-      - /var/log:/var/log
-      - /var/lib/docker/containers:/var/lib/docker/containers
-      - ./promtail:/etc/promtail-config/
-    command: -config.file=/etc/promtail-config/promtail.yml
-    networks:
-      - monitoring
-      - back
 
 volumes:
   grafana:
   loki:
   prometheus:
+
+networks:
+  front:
+    driver: bridge
+  back:
+    internal: true
+  monitoring:
+    internal: true

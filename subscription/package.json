@@ -21,11 +21,10 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
-    "@go1f/nestjs-kafka-client": "0.0.8",
     "@grpc/proto-loader": "^0.6.2",
     "@nestjs/common": "^7.6.15",
     "@nestjs/config": "^0.6.3",
-    "@nestjs/core": "^7.6.15",
+    "@nestjs/core": "^7.6.17",
     "@nestjs/microservices": "^7.6.17",
     "@nestjs/platform-express": "^7.6.15",
     "@nestjs/sequelize": "^0.2.0",
@@ -57,7 +56,7 @@
   "devDependencies": {
     "@nestjs/cli": "^7.6.0",
     "@nestjs/schematics": "^7.3.0",
-    "@nestjs/testing": "^7.6.15",
+    "@nestjs/testing": "^7.6.17",
     "@types/express": "^4.17.11",
     "@types/jest": "^26.0.22",
     "@types/node": "^14.14.36",

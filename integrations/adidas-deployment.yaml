@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: Kompose convert
+    kompose.version: 1.21.0 (992df58d8)
+  labels:
+    io.kompose.service: adidas
+  name: adidas
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: adidas
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: Kompose convert
+        kompose.version: 1.21.0 (992df58d8)
+      labels:
+        io.kompose.network/back: "true"
+        io.kompose.network/front: "true"
+        io.kompose.service: adidas
+    spec:
+      containers:
+      - env:
+        - name: API_KEY
+          value: 1ab2c3d4e5f61ab2c3d4e5f6
+        - name: API_PORT
+          value: "3000"
+        - name: CONNECTIONSTRING
+          value: mongodb://mongo:27017/notes
+        - name: JAEGER_ENDPOINT
+          value: jaeger-collector.jaeger-infra.svc
+        - name: SERVER_PORT
+          value: "8000"
+        - name: SUBSCRIPTION_SERVICE
+          value: subscription-service
+        image: adidas
+        imagePullPolicy: ""
+        name: adidas
+        ports:
+        - containerPort: 3000
+        resources: {}
+      restartPolicy: Always
+      serviceAccountName: ""
+
+status: {}

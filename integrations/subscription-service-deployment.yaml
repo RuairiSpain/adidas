@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: Kompose convert
+    kompose.version: 1.21.0 (992df58d8)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: subscription-service
+  name: subscription-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: subscription-service
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: Kompose convert
+        kompose.version: 1.21.0 (992df58d8)
+      creationTimestamp: null
+      labels:
+        io.kompose.network/back: "true"
+        io.kompose.service: subscription-service
+    spec:
+      containers:
+      - env:
+        - name: DB_NAME
+          value: OtelTempo
+        - name: DB_PASS
+          value: P@ssw0rd
+        - name: DB_SERVER
+          value: otmssql
+        - name: DB_USER
+          value: sa
+        - name: LOG_FILE_NAME
+          value: adidas.log
+        - name: OTEL_EXPORTER_JAEGER_ENDPOINT
+          value: http://localhost:14268/api/traces
+        - name: OTEL_SERVICE_NAME
+          value: nodejs-opentelemetry-tempo
+        image: subscription-service
+        imagePullPolicy: ""
+        name: subscription-service
+        ports:
+        - containerPort: 19092
+        resources: {}
+      restartPolicy: Always
+      serviceAccountName: ""
+      volumes: null
+status: {}

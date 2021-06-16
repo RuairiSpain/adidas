@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { SequelizeModule } from '@nestjs/sequelize';
 
 import { SubscriptionGrpcService } from './app.controller';
+import { DBProviders } from './models/db.providers';
 import { SubscriptionService } from './services/subscription.service';
 
 const envFilePath =
@@ -15,15 +16,16 @@ const envFilePath =
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         dialect: 'postgres',
-        username: config.get('DB_USER'),
-        password: config.get('DB_PASS'),
-        database: config.get('DB_NAME'),
-        host: config.get('DB_HOST'),
+        username: config.get('POSTGRES_USER'),
+        password: config.get('POSTGRES_PASSWORD'),
+        database: config.get('POSTGRES_DB'),
+        host: config.get('POSTGRES_HOST'),
         autoLoadModels: true,
       }),
     }),
   ],
   controllers: [SubscriptionGrpcService],
-  providers: [SubscriptionService],
+  providers: [SubscriptionService, ...DBProviders],
+  exports: [SubscriptionService],
 })
 export class AppModule {}

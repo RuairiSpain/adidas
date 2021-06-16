@@ -1,35 +1,14 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { Body, Controller, Post } from '@nestjs/common';
+import { Controller } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
-import { Client, ClientKafka, Transport } from '@nestjs/microservices';
 import { Metadata, ServerUnaryCall } from 'grpc';
 
-import { EmailPost } from './models/emailPost';
 import { Subscription } from './models/subscription';
 import { SubscriptionService } from './services/subscription.service';
 
 @Controller()
 export class SubscriptionGrpcService {
-  @Client({
-    transport: Transport.KAFKA,
-    options: {
-      client: {
-        clientId: 'email',
-        brokers: ['kafka.kafka:9092'],
-      },
-      consumer: {
-        groupId: 'email-consumer',
-      },
-    },
-  })
-  client: ClientKafka;
-
   constructor(private readonly subscriptionService: SubscriptionService) {}
-
-  async onModuleInit() {
-    this.client.subscribeToResponseOf('send.email');
-    await this.client.connect();
-  }
 
   @GrpcMethod()
   async create(
@@ -38,9 +17,6 @@ export class SubscriptionGrpcService {
     call: ServerUnaryCall<any>,
   ) {
     const subscription = await this.subscriptionService.create(data);
-    const post = new EmailPost(subscription, subscription.newsletter);
-    await this.client.send('send.email', post);
-
     return subscription;
   }
 

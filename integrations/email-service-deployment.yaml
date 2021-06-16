@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: Kompose convert
+    kompose.version: 1.21.0 (992df58d8)
+  labels:
+    io.kompose.service: email-service
+  name: email-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: email-service
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: Kompose convert
+        kompose.version: 1.21.0 (992df58d8)
+      labels:
+        io.kompose.network/back: "true"
+        io.kompose.service: email-service
+    spec:
+      containers:
+      - env:
+        - name: MAIL_FROM
+          value: noreply@example.com
+        - name: MAIL_HOST
+          value: smtp.example.com
+        - name: MAIL_PASSWORD
+          value: topsecret
+        - name: MAIL_USER
+          value: user@example.com
+        image: email-service
+        imagePullPolicy: ""
+        name: email-service
+        ports:
+        - containerPort: 19092
+        resources: {}
+      restartPolicy: Always
+      serviceAccountName: ""
+status: {}

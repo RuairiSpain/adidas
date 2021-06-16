@@ -1,8 +1,8 @@
-import { AutoIncrement, Column, IsEmail, Model, PrimaryKey, Table } from 'sequelize-typescript';
+import { AutoIncrement, Column, DataType, IsEmail, Model, PrimaryKey, Table } from 'sequelize-typescript';
 
 @Table({
   tableName: 'Newsletter',
-  indexes: [{ fields: ['from'] }],
+  indexes: [{ fields: ['email'] }],
 })
 export class NewsletterDao extends Model<NewsletterDao> {
   @PrimaryKey
@@ -10,16 +10,18 @@ export class NewsletterDao extends Model<NewsletterDao> {
   @Column
   id: number;
 
-  @Column
   @IsEmail
-  from!: string;
+  @Column
+  email: string;
 
   @Column
-  title!: string;
+  title: string;
 
   @Column
-  template!: string;
+  template: string;
 
   @Column
-  token!: string;
+  token: string;
 }
+
+

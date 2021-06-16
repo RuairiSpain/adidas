@@ -10,7 +10,7 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const logger = new Logger('Adidas API Bootstrap', true);
 
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { cors: true });
 
   /* Express middleware. */
   app.use(morgan('common'));

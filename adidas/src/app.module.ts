@@ -1,12 +1,8 @@
-import {
-  LoggerService,
-  OpenTelemetryModule,
-  TraceService,
-} from '@metinseylan/nestjs-opentelemetry';
-import { CacheInterceptor, CacheModule, Module } from '@nestjs/common';
+import { LoggerService, OpenTelemetryModule, TraceService } from '@metinseylan/nestjs-opentelemetry';
+import { Module } from '@nestjs/common';
 import { Logger } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { APP_INTERCEPTOR } from '@nestjs/core';
+import { ClientsModule, Transport } from '@nestjs/microservices';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
 import { JaegerExporter } from '@opentelemetry/exporter-jaeger';
 import { DnsInstrumentation } from '@opentelemetry/instrumentation-dns';
@@ -14,10 +10,10 @@ import { ExpressInstrumentation } from '@opentelemetry/instrumentation-express';
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
 import { PgInstrumentation } from '@opentelemetry/instrumentation-pg';
 import { BatchSpanProcessor } from '@opentelemetry/tracing';
-import * as redisStore from 'cache-manager-redis-store';
 import { AwsInstrumentation } from 'opentelemetry-instrumentation-aws-sdk';
 import { KafkaJsInstrumentation } from 'opentelemetry-instrumentation-kafkajs';
 import { SequelizeInstrumentation } from 'opentelemetry-instrumentation-sequelize';
+import { join } from 'path';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -53,12 +49,33 @@ contextManager.with(scope1, async () => {
     //   max: 10, // maximum number of items in cache
     // }),
 
+    ClientsModule.register([
+      {
+        name: 'subscription-service',
+        options: {
+          transport: Transport.GRPC,
+          url: 'subscription-service',
+          package: 'subscription',
+          protoPath: join(__dirname, 'hero/hero.proto'),
+          loader: {
+            keepCase: true,
+            arrays: true,
+            longs: String,
+            enums: String,
+            defaults: true,
+          },
+        },
+      },
+    ]),
+
     ConfigModule.forRoot({ isGlobal: true }),
+
     AuthModule,
+
     OpenTelemetryModule.register({
       spanProcessor: new BatchSpanProcessor(
         new JaegerExporter({
-          endpoint: process.env.JAEGER_ENDPOINT,
+          endpoint: 'tempo',
           port: 14250,
           maxPacketSize: 65000,
         }),

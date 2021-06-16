@@ -13,7 +13,7 @@ export class AppService implements OnModuleInit {
   onModuleInit() {
     // Setup the grpc stub interface to talk to the GRPC server
     this.svc = this.client.getService<ClientSubscriptionService>(
-      'SubscriptionService',
+      'subscription-service',
     );
   }
 

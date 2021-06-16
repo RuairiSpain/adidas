@@ -9,7 +9,7 @@ import { IKafkaMessage } from './interfaces/kafkaMessage';
 export class AppController {
   constructor(private service: AppService) {}
 
-  @MessagePattern('send.post')
+  @MessagePattern('send.email')
   addPost(@Payload() message: IKafkaMessage<IEmailPost>) {
     return this.service.sendMail(
       message.value.subscription,

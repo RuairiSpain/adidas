@@ -1,0 +1,46 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kompose.cmd: Kompose convert
+    kompose.version: 1.21.0 (992df58d8)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: splunk-otel-collector
+  name: splunk-otel-collector
+spec:
+  ports:
+  - name: "13133"
+    port: 13133
+    targetPort: 13133
+  - name: "14250"
+    port: 14250
+    targetPort: 14250
+  - name: "14268"
+    port: 14268
+    targetPort: 14268
+  - name: "4317"
+    port: 4317
+    targetPort: 4317
+  - name: "6060"
+    port: 6060
+    targetPort: 6060
+  - name: "7276"
+    port: 7276
+    targetPort: 7276
+  - name: "8888"
+    port: 8888
+    targetPort: 8888
+  - name: "9080"
+    port: 9080
+    targetPort: 9080
+  - name: "9411"
+    port: 9411
+    targetPort: 9411
+  - name: "9943"
+    port: 9943
+    targetPort: 9943
+  selector:
+    io.kompose.service: splunk-otel-collector
+status:
+  loadBalancer: {}
