@@ -132,4 +132,4 @@ In the end, I didn't get the project working.  I lost time on gyp build issues o
 
 I would like to have spent more time writing unit and e2e tests but I focused on the code instead.  Also, would have liked to implemented the Github Actions to setup the pipeline steps to build the 3 microservices, triggered to run on a PR acceptance.  The end result would be a publish to Docker Hub and ideal a local MiniKube cluster with Weave Flux and GitOps workflow for deployment.  Sadly, these DevOps tasks takes more time than the time it takes to write the app.
 
-I migrated the compose file to Helm charts used `Kompose`.  Given more time, I would have extracted variables/secrets and then created a `Kustomize` project, with YAML patches for Testing, Staging and Production environments.
+I migrated the compose file to Helm charts used `Kompose`.  Given more time, I would have extracted variables/secrets and then created a `Kustomize` project, with YAML patches for Testing, Staging and Production environments.  The barebones Helm files are in: `integrations/*`
