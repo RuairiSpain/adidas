@@ -62,7 +62,7 @@ To start outside of Docker/Kubernetes, run from the VSCode `JavaScript Debug Ter
 
 ```
 
-#### 2. Email Microservice - `app/email`
+#### 3. Email Microservice - `app/email`
 
 This is a NestJS microservice, that is Kafka consumer.  The Kafka server is setup with only one extra topic `send.email`.  Note, in Docker compose, the `KAFKA_AUTO_CREATE_TOPICS_ENABLE` is disabled, if developers want to add message keys, they need to make a request to the DevOps team.  This will protect the Kafka partitions from becoming imbalanced and have sub-optimal message performance.
 
@@ -92,6 +92,58 @@ MAIL_FROM=noreply@example.com
 ```
 
 Note, the email are generated in HTML using handlebars and the raw HTML templates are stored in `./email/src/templates`  So any new tempaltes, means a rebuiold of the email microservice.  Perhaps a version, can save the handlebars templates in a column in the `Newsletter` Postgres table.
+
+## Getting Started - Docker Compose
+
+To run the stack in docker compose first, you'll need some .env files to setup "secrets":
+
+### ./.env.development.local
+```
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=qwerty2021
+POSTGRES_DB=adidas
+```
+
+###  ./.env
+```
+SPLUNK_ACCESS_TOKEN=12345
+SPLUNK_MEMORY_TOTAL_MIB=1024
+SPLUNK_REALM=eur1
+```
+
+### ./adidas/src/.env
+```
+JAEGER_ENDPOINT=jaeger-collector.jaeger-infra.svc
+SUBSCRIPTION_SERVICE=subscription-service
+API_PORT=3000
+API_KEY=1ab2c3d4e5f61ab2c3d4e5f6
+```
+
+### ./subscriptions/src/.env
+```
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=qwerty2021
+POSTGRES_DB=adidas
+POSTGRES_HOST=postgres
+```
+
+
+### ./email/src/.env
+```
+MAIL_HOST=smtp.example.com
+MAIL_USER=user@example.com
+MAIL_PASSWORD=topsecret
+MAIL_FROM=noreply@example.com
+```
+
+### Run docker-compose up
+```
+docker-compose up
+```
+
+Visit http://localhost:3000/swagger to see the API endpoint documentation
+
+Unfortunately, I didn't have time to complete the exercise, so I've not been able to test the GRPC calls to subscription service or the Kafka messages in email-service
 
 ## Kubernetes Solution Architecture
 
